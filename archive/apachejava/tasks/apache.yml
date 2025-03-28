@@ -1,0 +1,48 @@
+---
+- name: Install Apache and Required Modules
+  apt:
+    name: 
+      - apache2
+      - libapache2-mod-jk
+    state: present
+    update_cache: yes
+
+- name: Install certificates
+  ansible.builtin.include_role:
+    name: certbot
+  vars:
+    hostname: "{{ website.hostname }}"
+
+- name: Enable Apache Modules
+  apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - proxy
+    - proxy_http
+    - proxy_ajp
+    - headers
+    - rewrite
+    - ssl
+
+- name: Configure Apache virtual host
+  template:
+    src: apache-vhost.conf.j2
+    dest: /etc/apache2/sites-available/hack-street-trails.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable the new site
+  command: a2ensite hack-street-trails.conf
+  notify: restart apache2
+
+- name: Disable default Apache site
+  command: a2dissite 000-default.conf
+  notify: restart apache2
+
+- name: Ensure Apache is enabled and started
+  systemd:
+    name: apache2
+    enabled: yes
+    state: started

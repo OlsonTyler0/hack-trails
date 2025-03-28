@@ -1,0 +1,37 @@
+---
+- name: Install Java and Tomcat10
+  apt:
+    name: 
+      - openjdk-21-jdk
+      - openjdk-21-jre
+      - tomcat10
+      - tomcat10-admin
+      - tomcat10-common
+      - tomcat10-docs
+    state: present
+    update_cache: yes
+
+- name: Ensure Servlet API libraries are installed
+  apt:
+    name:
+      - libjakarta-servlet-api-java
+    state: present
+
+- name: Install Maven (optional, but recommended for dependency management)
+  apt:
+    name: maven
+    state: present
+
+- name: Ensure Tomcat is enabled and started
+  systemd:
+    name: tomcat10
+    enabled: yes
+    state: started
+
+- name: Create Tomcat webapp directory
+  file:
+    path: /var/lib/tomcat10/webapps/ServletExample
+    state: directory
+    owner: tomcat
+    group: tomcat
+    mode: '0755'

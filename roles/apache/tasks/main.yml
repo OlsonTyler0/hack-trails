@@ -1,0 +1,71 @@
+---
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - apache2
+      - python3-pip
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Enable required Apache modules
+  ansible.builtin.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - rewrite
+    - ssl
+    - headers
+  become: true
+  notify: Restart Apache
+
+- name: Create web directory
+  ansible.builtin.file:
+    path: "/var/www/{{ website_domain }}"
+    state: directory
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: '0755'
+  become: true
+
+- name: Install certificates
+  ansible.builtin.include_role:
+    name: certbot
+  vars:
+    hostname: "{{ website.hostname }}"
+
+- name: Copy website files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/var/www/{{ website_domain }}/"
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: '0644'
+  with_items:
+    - index.html
+    - Logo.png
+  become: true
+
+- name: Configure Apache Virtual Host
+  ansible.builtin.template:
+    src: trails.olsontyler.com.j2
+    dest: "/etc/apache2/sites-available/{{ website_domain }}.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart Apache
+
+- name: Enable website
+  ansible.builtin.command: "a2ensite {{ website_domain }}.conf"
+  args:
+    creates: "/etc/apache2/sites-enabled/{{ website_domain }}.conf"
+  become: true
+  notify: Restart Apache
+
+- name: Disable default site
+  ansible.builtin.command: a2dissite 000-default.conf
+  args:
+    removes: /etc/apache2/sites-enabled/000-default.conf
+  become: true
+  notify: Restart Apache

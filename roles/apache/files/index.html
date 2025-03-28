@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HACK-STREET TRAILS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+	<style>
+	        * {
+	            margin: 0;
+	            padding: 0;
+	            box-sizing: border-box;
+	            font-family: 'papyrus', sans-serif;
+	        }
+
+	        body {
+	            background: #8caf9c;
+	            color: #333;
+	            line-height: 1.6;
+	        }
+
+	        .container {
+	            max-width: 1200px;
+	            margin: 0 auto;
+	            padding: 20px;
+	        }
+
+	        header {
+	            background: linear-gradient(135deg, #4a745c, #4a745c);
+	            color: white;
+	            padding: 2rem 0;
+	            text-align: center;
+	            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+	            position: relative; /* For logo positioning */
+	        }
+
+	        header .container {
+	            display: flex;
+	            align-items: center;
+	            justify-content: center;
+	            position: relative;
+	        }
+
+	        header .logo {
+	            position: absolute;
+	            left: 5px;
+	            top: 50%;
+	            transform: translateY(-50%);
+	            height: 150px; /* Adjust size as needed */
+	            width: auto;
+	        }
+
+	        header h1 {
+	            font-size: 2.5rem;
+	            margin-bottom: 0.5rem;
+	        }
+
+	        .search-container {
+	            background: white;
+	            padding: 1rem;
+	            border-radius: 8px;
+	            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+	            margin: 2rem 0;
+	            display: flex;
+	            gap: 10px;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        .search-container input {
+	            flex: 1;
+	            padding: 12px;
+	            border: 1px solid #ddd;
+	            border-radius: 4px;
+	            font-size: 1rem;
+	            transition: border-color 0.3s;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        .search-container input:focus {
+	            outline: none;
+	            border-color: #4c4e52;
+	        }
+
+	        .search-container button {
+	            padding: 12px 24px;
+	            background: #4c4e52;
+	            color: white;
+	            border: none;
+	            border-radius: 4px;
+	            cursor: pointer;
+	            font-size: 1rem;
+	            transition: background 0.3s;
+	        }
+
+	        .search-container button:hover {
+	            background: #27ae60;
+	        }
+
+	        #map {
+	            height: 500px;
+	            border-radius: 8px;
+	            margin: 2rem 0;
+	            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+				font-family: 'arial', sans-serif;
+	        }
+
+	        #results {
+	            background: white;
+	            padding: 1.5rem;
+	            border-radius: 8px;
+	            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+	            margin-bottom: 2rem;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        #results h2 {
+	            color: #4c4e52;
+	            margin-bottom: 1rem;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        #resultsList {
+	            list-style: none;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        #resultsList li {
+	            padding: 1rem;
+	            border-bottom: 1px solid #eee;
+	            transition: background 0.3s;
+	            cursor: pointer;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        #resultsList li:hover {
+	            background: #f8f9fa;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        #resultsList li strong {
+	            color: #2ecc71;
+	            display: block;
+				font-family: 'arial', sans-serif;
+	        }
+
+	        footer {
+	            text-align: center;
+	            padding: 1rem;
+	            color: #666;
+	            background: #fff;
+	            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+	        }
+
+	        @media (max-width: 768px) {
+	            .search-container {
+	                flex-direction: column;
+	            }
+	            
+	            header h1 {
+	                font-size: 2rem;
+	            }
+
+	            header .logo {
+	                height: 40px; /* Smaller logo on mobile */
+	                left: 10px;
+	            }
+	        }
+	    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <img src="Logo.png" alt="Hack-Street Trails Logo" class="logo">
+            <div>
+                <h1>HACK-STREET TRAILS</h1>
+                <p>Discover the best trails in the Ozarks region</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <form id="searchForm" class="search-container">
+            <input type="text" id="searchQuery" placeholder="Search for a trail or type 'popular' for top trails" />
+            <button type="submit">Search Trails</button>
+        </form>
+
+        <div id="map"></div>
+
+        <div id="results">
+            <h2>Trail Results</h2>
+            <ul id="resultsList"></ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 HACK-STREET TRAILS. All rights reserved.</p>
+    </footer>
+
+    <!-- Load Google Maps API with Places Library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD3IYYssKsL9qE4xAKqCDOPPg4-v1_ti1M&libraries=places"></script>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        // Initialize Leaflet map
+        var map = L.map('map').setView([37.2153, -93.2983], 10); // Springfield, MO
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18
+        }).addTo(map);
+
+        // Custom marker icon
+        var greenIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // Initialize Google Places Service
+        var service = new google.maps.places.PlacesService(document.createElement('div'));
+
+        // Convert Leaflet bounds to Google Maps bounds
+        L.LatLngBounds.prototype.toGoogleLatLngBounds = function() {
+            return new google.maps.LatLngBounds(
+                { lat: this.getSouthWest().lat, lng: this.getSouthWest().lng },
+                { lat: this.getNorthEast().lat, lng: this.getNorthEast().lng }
+            );
+        };
+
+        // Search form handler
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const queryInput = document.getElementById('searchQuery');
+            const query = queryInput.value.trim();
+            const resultsList = document.getElementById('resultsList');
+
+            if (!query) {
+                resultsList.innerHTML = '<li>Please enter a search term</li>';
+                return;
+            }
+
+            resultsList.innerHTML = '<li>Loading trails...</li>';
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) map.removeLayer(layer);
+            });
+
+            // Define search parameters
+            const request = {
+                bounds: map.getBounds().toGoogleLatLngBounds(), // Search within map bounds
+                type: 'park' // Target trails/parks
+            };
+
+            if (query.toLowerCase() === 'popular') {
+                request.query = 'trails in Ozarks';
+                service.textSearch(request, handlePlacesResults);
+            } else {
+                request.query = `${query} trail Ozarks`;
+                service.textSearch(request, handlePlacesResults);
+            }
+        });
+
+        // Handle Places API results
+        function handlePlacesResults(results, status) {
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+            const bounds = [];
+
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                results.forEach(place => {
+                    const lat = place.geometry.location.lat();
+                    const lon = place.geometry.location.lng();
+                    const name = place.name;
+                    const location = place.vicinity || 'Ozarks Region';
+                    const address = place.formatted_address || 'No address available';
+                    const rating = place.rating ? place.rating.toFixed(1) : 'N/A';
+                    const reviewCount = place.user_ratings_total || 0;
+                    const website = place.website || `https://www.google.com/maps/place/?q=place_id:${place.place_id}`;
+
+                    // Add marker to map
+                    const marker = L.marker([lat, lon], { icon: greenIcon })
+                        .addTo(map)
+                        .bindPopup(`<strong>${name}</strong><br>${location}<br>Rating: ${rating}/5 (${reviewCount} reviews)`);
+                    bounds.push([lat, lon]);
+
+                    // Add to results list
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${name}</strong><br>${location}<br>${address}<br>Rating: ${rating}/5 (${reviewCount} reviews)<br><a href="${website}" target="_blank">Visit Website</a>`;
+                    li.onclick = () => {
+                        map.setView([lat, lon], 14);
+                        marker.openPopup();
+                    };
+                    resultsList.appendChild(li);
+                });
+
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds);
+                } else {
+                    resultsList.innerHTML = '<li>No trails found</li>';
+                }
+            } else {
+                resultsList.innerHTML = `<li>Error: ${status}</li>`;
+            }
+        }
+    </script>
+</body>
+</html>

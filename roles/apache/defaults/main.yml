@@ -1,0 +1,6 @@
+---
+website_domain: "trails.olsontyler.com"
+admin_email: "olsontyler021@gmail.com"
+web_user: "www-data"
+web_group: "www-data"
+ssl_enabled: true

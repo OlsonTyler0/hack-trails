@@ -1,0 +1,25 @@
+---
+- name: Install snapd & nginx
+  apt:
+    name:
+      - snapd
+      - /etc/apache2/sites-available/hack-street-trails.conf
+    state: present
+  become: true
+
+- name: Install Certbot
+  community.general.snap:
+    name: certbot
+    classic: yes
+  become: true
+
+- name: Create symbolic link for Certbot
+  file:
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+    state: link
+  become: true
+
+- name: Obtain and install SSL certificate with Certbot for nginx
+  command: "certbot certonly --apache --non-interactive --agree-tos -m {{ admin_email }} --domains {{ hostname }}"
+  become: true

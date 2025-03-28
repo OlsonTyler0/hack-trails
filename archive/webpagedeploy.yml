@@ -1,0 +1,23 @@
+- name: Deploy the templated versions of our website to the server
+  hosts: all
+  tasks:
+    - name: Copy the html file for the server to /var/www/html
+      ansible.builtin.template:
+        src: html.j2
+        dest: "/var/www/html/index.html"
+        mode: '660'
+      become: true
+
+    - name: Copy the html file for the server to /var/www/html
+      ansible.builtin.template:
+        src: html.j2
+        dest: "/var/www/html/searchServlet.java"
+        mode: '660'
+      become: true
+
+    - name: Restart nginx
+      ansible.builtin.systemd_service:
+        state: restarted
+        daemon_reload: true
+        name: nginx
+      become: true

@@ -1,0 +1,17 @@
+---
+- name: Deploys a mysql database to an ubuntu server
+  hosts: all
+  vars:
+    mysql_root_password_update: true
+    mysql_root_password: "rootpassword"
+    mysql_databases:
+      - name: trails
+        encoding: utf8mb4
+        collation: utf8mb4_general_ci
+    mysql_users:
+      - name: www
+        password: "example"
+        priv: "trails.*:ALL"
+
+  roles:
+    - role: geerlingguy.mysql

@@ -1,0 +1,47 @@
+# trails.olsontyler.com Apache configuration
+
+# HTTP Virtual Host - Redirects to HTTPS
+<VirtualHost *:80>
+    ServerName trails.olsontyler.com
+    ServerAdmin webmaster@olsontyler.com
+    DocumentRoot /var/www/trails.olsontyler.com
+    
+    # Redirect all HTTP traffic to HTTPS
+    RewriteEngine On
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+    
+    ErrorLog ${APACHE_LOG_DIR}/trails-error.log
+    CustomLog ${APACHE_LOG_DIR}/trails-access.log combined
+</VirtualHost>
+
+# HTTPS Virtual Host
+<VirtualHost _default_:443>
+    ServerName trails.olsontyler.com
+    ServerAdmin webmaster@olsontyler.com
+    DocumentRoot /var/www/trails.olsontyler.com
+    
+    <Directory /var/www/trails.olsontyler.com>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    # SSL Configuration
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/trails.olsontyler.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/trails.olsontyler.com/privkey.pem
+    
+    # Modern SSL settings
+    SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+    SSLHonorCipherOrder on
+    SSLCompression off
+    
+    # Security headers
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options SAMEORIGIN
+    
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/trails-ssl-error.log
+    CustomLog ${APACHE_LOG_DIR}/trails-ssl-access.log combined
+</VirtualHost>

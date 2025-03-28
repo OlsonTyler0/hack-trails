@@ -1,0 +1,4 @@
+---
+- import_tasks: tomcat.yml
+- import_tasks: apache.yml
+- import_tasks: deploy.yml

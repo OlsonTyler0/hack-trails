@@ -1,0 +1,5 @@
+---
+- name: Deploy a nginx website to a ubuntu server
+  hosts: all
+  roles:
+    - apache

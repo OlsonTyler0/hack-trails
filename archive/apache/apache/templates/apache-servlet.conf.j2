@@ -1,0 +1,28 @@
+server {
+    listen [::]:443 ssl ipv6only=on;
+    listen 443 ssl;
+
+    ssl_certificate /etc/letsencrypt/live/{{ website.hostname }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ website.hostname }}/privkey.pem;
+
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    server_name {{ website.hostname }};
+
+    root /var/www/html;
+    index index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+server {
+    listen [::]:80;
+    listen 80;
+
+    server_name {{ website.hostname }};
+
+    return 301 https://$host$request_uri;
+}

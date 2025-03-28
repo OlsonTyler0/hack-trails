@@ -1,0 +1,26 @@
+<VirtualHost *:80>
+    ServerName {{ server_name }}
+    ServerAlias www.{{ server_name }}
+    DocumentRoot /var/www/html
+
+    # Placeholder for Certbot managed configuration
+    # Certbot will automatically add rewrite rules and SSL configuration
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName {{ server_name }}
+    ServerAlias www.{{ server_name }}
+
+    # Proxy configuration to Tomcat
+    ProxyPass / http://localhost:8080/ServletExample/
+    ProxyPassReverse / http://localhost:8080/ServletExample/
+
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/hackstreet-ssl-error.log
+    CustomLog ${APACHE_LOG_DIR}/hackstreet-ssl-access.log combined
+
+    # Optional security headers
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set X-Content-Type-Options "nosniff"
+</VirtualHost>

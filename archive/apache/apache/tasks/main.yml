@@ -1,0 +1,161 @@
+---
+- name: Install Java and Tomcat
+  ansible.builtin.apt:
+    update_cache: true
+    name:
+      - default-jre
+      - default-jdk
+      - tomcat10
+      - tomcat10-admin
+      - apache2
+      - maven
+      - libtomcat10-java
+      - libservlet-api-java
+    state: present
+
+- name: Install certificates
+  ansible.builtin.include_role:
+    name: certbot
+  vars:
+    hostname: "{{ website.hostname }}"
+
+- name: Copy frontend files
+  ansible.builtin.copy:
+    src: files/index.html
+    dest: /var/www/html/
+
+- name: Create project directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+  loop:
+    - /opt/trail-search
+    - /opt/trail-search/build
+    - /opt/trail-search/WEB-INF
+    - /opt/trail-search/WEB-INF/classes
+    - /opt/trail-search/WEB-INF/classes/itc475
+    - /opt/trail-search/WEB-INF/classes/itc475/week5
+
+- name: Copy SearchServlet source
+  ansible.builtin.copy:
+    src: files/SearchServlet.java
+    dest: /opt/trail-search/SearchServlet.java
+    mode: '666'
+
+- name: Install Maven servlet API dependency
+  ansible.builtin.copy:
+    content: |
+      <project>
+        <dependencies>
+          <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+          </dependency>
+        </dependencies>
+      </project>
+    dest: /opt/trail-search/pom.xml
+    owner: tomcat
+    group: tomcat
+
+- name: Install Jakarta EE Servlet API
+  ansible.builtin.apt:
+    name: 
+      - libjakarta-servlet-api-java
+    state: present
+
+- name: Compile SearchServlet with explicit temp directory
+  ansible.builtin.shell: 
+    cmd: |
+      mkdir -p /tmp/trail-search-compile
+      javac -cp "/usr/share/tomcat10/lib/servlet-api.jar" \
+            -d /tmp/trail-search-compile \
+            SearchServlet.java
+      cp -r /tmp/trail-search-compile/itc475 /opt/trail-search/
+      rm -rf /tmp/trail-search-compile
+    chdir: /opt/trail-search
+  become: yes
+  become_user: root
+
+- name: Create manifest file
+  ansible.builtin.copy:
+    content: |
+      Manifest-Version: 1.0
+      Created-By: Ansible Deployment
+      Main-Class: itc475.week5.SearchServlet
+    dest: /opt/trail-search/WEB-INF/MANIFEST.MF
+    owner: tomcat
+    group: tomcat
+    mode: '0644'
+
+- name: Set correct permissions on compiled files
+  ansible.builtin.file:
+    path: /opt/trail-search/itc475
+    state: directory
+    recurse: yes
+    owner: tomcat
+    group: tomcat
+    mode: '0755'
+
+- name: Configure Apache Virtual Host
+  template:
+    src: templates/apache-servlet.conf.j2
+    dest: /etc/apache2/sites-available/{{ website.hostname }}.conf
+
+- name: Prepare WAR file structure
+  ansible.builtin.shell:
+    cmd: |
+      mkdir -p WEB-INF/classes
+      cp -r itc475 WEB-INF/classes/
+    chdir: /opt/trail-search
+  become: true
+  become_user: tomcat
+
+- name: Create WAR file
+  ansible.builtin.shell: 
+    cmd: |
+      cd /opt/trail-search
+      jar cvfm ServletExample.war WEB-INF/MANIFEST.MF -C WEB-INF .
+      chown tomcat:tomcat ServletExample.war
+      chmod 644 ServletExample.war
+    creates: /opt/trail-search/ServletExample.war
+  become: yes
+  become_user: root
+
+- name: Deploy WAR to Tomcat
+  ansible.builtin.copy:
+    src: /opt/trail-search/ServletExample.war
+    dest: /var/lib/tomcat10/webapps/
+    remote_src: yes
+    owner: tomcat
+    group: tomcat
+    mode: '0644'
+
+
+- name: Ensure Tomcat is running
+  ansible.builtin.systemd:
+    name: tomcat10
+    state: restarted
+    enabled: yes
+
+- name: Enable Apache proxy modules
+  ansible.builtin.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - proxy
+    - proxy_http
+    - rewrite
+
+- name: Enable Apache site
+  command: a2ensite {{ website.hostname }}
+
+- name: Restart Apache
+  systemd:
+    name: apache2
+    state: restarted
+    enabled: yes

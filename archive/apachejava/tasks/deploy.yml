@@ -1,0 +1,102 @@
+---
+# deploy.yml - Simplified deployment using WAR file
+- name: Install Java and Tomcat dependencies
+  apt:
+    name:
+      - default-jdk
+      - tomcat10
+      - tomcat10-admin
+    state: present
+    update_cache: yes
+
+- name: Create temporary project structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /tmp/servlet_project
+    - /tmp/servlet_project/WEB-INF
+    - /tmp/servlet_project/WEB-INF/classes
+    - /tmp/servlet_project/WEB-INF/lib
+
+- name: Copy SearchServlet.java to temporary directory
+  copy:
+    src: SearchServlet.java
+    dest: /tmp/SearchServlet.java
+    mode: '0644'
+
+- name: Find Jakarta servlet-api JAR in Tomcat
+  shell: find /usr/share/tomcat10/ -name "jakarta.servlet-api*.jar" | head -1
+  register: servlet_api_jar
+  changed_when: false
+  ignore_errors: yes
+
+- name: Use direct JAR path if find command failed
+  set_fact:
+    tomcat_lib_path: "/usr/share/tomcat10/lib"
+    servlet_api_jar_path: "/usr/share/tomcat10/lib/jakarta.servlet-api.jar"
+  when: servlet_api_jar.stdout is not defined or servlet_api_jar.stdout == ""
+
+- name: Set servlet API path from find result
+  set_fact:
+    servlet_api_jar_path: "{{ servlet_api_jar.stdout }}"
+  when: servlet_api_jar.stdout is defined and servlet_api_jar.stdout != ""
+
+- name: Show servlet JAR path
+  debug:
+    var: servlet_api_jar_path
+
+- name: Compile servlet into WEB-INF/classes
+  shell: |
+    mkdir -p /tmp/servlet_project/WEB-INF/classes/itc475/week5
+    javac -cp {{ servlet_api_jar_path }} -d /tmp/servlet_project/WEB-INF/classes /tmp/SearchServlet.java
+  args:
+    executable: /bin/bash
+
+- name: Create web.xml
+  copy:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+               version="5.0">
+          <display-name>Hack-Street Trails Servlet</display-name>
+      </web-app>
+    dest: /tmp/servlet_project/WEB-INF/web.xml
+    mode: '0644'
+
+- name: Copy index.html to temporary directory
+  copy:
+    src: index.html
+    dest: /tmp/servlet_project/index.html
+    mode: '0644'
+
+- name: Copy Logo.png to temporary directory
+  copy:
+    src: Logo.png
+    dest: /tmp/servlet_project/Logo.png
+    mode: '0644'
+
+- name: Create WAR file
+  shell: |
+    cd /tmp/servlet_project
+    jar -cvf /tmp/ServletExample.war *
+  args:
+    executable: /bin/bash
+
+- name: Deploy WAR file to Tomcat
+  copy:
+    src: /tmp/ServletExample.war
+    dest: /var/lib/tomcat10/webapps/ServletExample.war
+    remote_src: yes
+    owner: tomcat
+    group: tomcat
+    mode: '0644'
+
+- name: Restart Tomcat service
+  systemd:
+    name: tomcat10
+    state: restarted
+    enabled: yes
