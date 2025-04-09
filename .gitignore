@@ -1,5 +1,5 @@
 # Local .terraform directories
-**/.terraform/*
+*/.terraform/*
 
 # .tfstate files
 *.tfstate
@@ -24,6 +24,7 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+
 # Ignore any files containing credentials
 *credentials*
 *secret*
@@ -32,3 +33,4 @@ terraform.rc
 
 inventory.ini
 mysqlDeploy.yml
+riley_key

@@ -3,14 +3,14 @@
   hosts: all
   vars:
     mysql_root_password_update: true
-    mysql_root_password: "rootpassword"
+    mysql_root_password: "%X3[qwR0c;CfjGFH"
     mysql_databases:
       - name: trails
         encoding: utf8mb4
         collation: utf8mb4_general_ci
     mysql_users:
       - name: www
-        password: "example"
+        password: "fRIoo2mJudGu-Mm,"
         priv: "trails.*:ALL"
 
   roles:

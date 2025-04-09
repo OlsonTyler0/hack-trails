@@ -28,7 +28,7 @@ provider "linode" {
 
 # Read the SSH public key
 data "local_file" "ssh_key" {
-  filename = "/home/tyler/.ssh/ansible_key.pub"
+  filename = "ssh_key"
 }
 
 # Create a Linode instance

@@ -1,43 +1,49 @@
 ---
 - name: MySQL Provisioning Playbook
   hosts: website
-  become: true
+  become: yes
   vars:
     mysql_user: "{{ mysql_username }}"
     mysql_password: "{{ mysql_password }}"
     mysql_host: "{{ mysql_host | default('localhost') }}"
     mysql_port: "{{ mysql_port | default('3306') }}"
     mysql_db: "{{ mysql_database }}"
+    temp_sql_path: "/tmp/mysqlProvision.txt"
 
   tasks:
-    - name: Check if MySQL command file exists
-      ansible.builtin.stat:
-        path: files/mysqlProvision.txt
-      register: mysql_commands_file
-      delegate_to: localhost
-
-    - name: Fail if MySQL command file is missing
-      ansible.builtin.fail:
-        msg: "Required MySQL commands file 'files/mysqlProvision.txt' not found!"
-      when: not mysql_commands_file.stat.exists
-
-    - name: Install required Python MySQL library
-      ansible.builtin.pip:
-        name: PyMySQL
+    - name: Copy MySQL commands file to the remote server
+      copy:
+        src: "../files/mysqlProvision.txt"
+        dest: "{{ temp_sql_path }}"
+        mode: '0600'
+      
+    - name: Ensure mysql-client is installed
+      package:
+        name: mysql-client
         state: present
-
-    - name: Execute MySQL commands from file
-      community.mysql.mysql_db:
-        login_user: "{{ mysql_user }}"
-        login_password: "{{ mysql_password }}"
-        login_host: "{{ mysql_host }}"
-        login_port: "{{ mysql_port }}"
-        state: import
-        name: "{{ mysql_db }}"
-        target: files/mysqlProvision.txt
+      ignore_errors: yes  # Some distros might use different package name
+    
+    - name: Execute MySQL commands using command line
+      shell: >
+        mysql -u {{ mysql_user }} 
+        -p'{{ mysql_password }}' 
+        -h {{ mysql_host }} 
+        -P {{ mysql_port }} 
+        {{ mysql_db }} < {{ temp_sql_path }}
+      no_log: false  # Hide sensitive output
       register: mysql_import_result
+      
+    - name: Display MySQL import status
+      debug:
+        msg: "MySQL import completed successfully"
+      when: mysql_import_result.rc == 0
 
-    - name: Display MySQL import results
-      ansible.builtin.debug:
-        var: mysql_import_result
-        verbosity: 1
+    - name: Display MySQL import error
+      debug:
+        msg: "MySQL import failed: {{ mysql_import_result.stderr }}"
+      when: mysql_import_result.rc != 0
+      
+    - name: Clean up temporary SQL file
+      file:
+        path: "{{ temp_sql_path }}"
+        state: absent

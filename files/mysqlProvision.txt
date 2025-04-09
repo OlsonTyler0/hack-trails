@@ -1,0 +1,88 @@
+
+CREATE TABLE users (
+        user_id                  INT          AUTO_INCREMENT            PRIMARY KEY,
+        username                VARCHAR(50) NOT NULL UNIQUE,
+        password_hash      VARCHAR(255) NOT NULL,
+        email                      VARCHAR(100) NOT NULL UNIQUE,
+        role                        ENUM('Admin', 'User') DEFAULT 'User'
+);
+
+CREATE TABLE trails (
+        trail_id                INT AUTO_INCREMENT PRIMARY KEY,
+        trail_name            VARCHAR(100) NOT NULL,
+        location                VARCHAR(150) NOT NULL,
+        length                    DECIMAL(4,1),
+        difficulty            ENUM('Easy', 'Moderate', 'Hard'),
+        url                          VARCHAR(150) NOT NULL
+);
+
+CREATE TABLE campgrounds (
+        campground_id              INT AUTO_INCREMENT PRIMARY KEY,
+        campground_name          VARCHAR(100) NOT NULL,
+        location                        VARCHAR(150) NOT NULL,
+        access_type                  ENUM('Walk-In', 'Drive-In') NOT NULL,
+        amenities                      TEXT,
+        description                  TEXT,
+        url                                  VARCHAR(150)
+);
+
+CREATE TABLE trail_reviews (
+        review_id              INT AUTO_INCREMENT PRIMARY KEY,
+        user_id                  INT,
+        trail_id                INT,
+        rating                    INT CHECK(rating BETWEEN 1 AND 5),
+        comment                  TEXT,
+        review_date          DATE NOT NULL DEFAULT (CURRENT_DATE),
+        FOREIGN KEY (user_id)      REFERENCES users(user_id)              ON DELETE CASCADE,
+        FOREIGN KEY (trail_id)    REFERENCES trails(trail_id)          ON DELETE CASCADE
+);
+
+CREATE TABLE users_trails (
+        user_trail_id              INT AUTO_INCREMENT PRIMARY KEY,
+        user_id                          INT,
+        trail_id                        INT,
+        access_date                  DATE NOT NULL DEFAULT (CURRENT_DATE),
+        FOREIGN KEY (user_id)      REFERENCES users(user_id)              ON DELETE CASCADE,
+        FOREIGN KEY (trail_id)    REFERENCES trails(trail_id)          ON DELETE CASCADE
+);
+
+CREATE TABLE users_campgrounds (
+        user_campground_id            INT AUTO_INCREMENT PRIMARY KEY,
+        user_id                                  INT,
+        campground_id                      INT,
+        access_date                          DATE NOT NULL DEFAULT (CURRENT_DATE),
+        FOREIGN KEY (user_id)                      REFERENCES users(user_id)                              ON DELETE CASCADE,
+        FOREIGN KEY (campground_id)          REFERENCES campgrounds(campground_id)      ON DELETE CASCADE
+);
+
+CREATE TABLE trails_campgrounds (
+        trail_campground_id          INT AUTO_INCREMENT PRIMARY KEY,
+        trail_id                                INT,
+        campground_id                      INT,
+        description                          TEXT,
+        FOREIGN KEY (trail_id)            REFERENCES trails(trail_id)                          ON DELETE CASCADE,
+        FOREIGN KEY (campground_id) REFERENCES campgrounds(campground_id)      ON DELETE CASCADE
+);
+
+
+
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Rocky Top Trail', 'Public Rd, Osage Beach, MO 65065', 2.2, 'Moderate', 'https://www.google.com/maps/place/?q=place_id:ChIJBZpsiy3bxIcRbdVsRiN6r2k');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Ozark National Forest Trailhead', 'West Fork, AR 72774', NULL, NULL, 'https://www.google.com/maps/place/?q=place_id:ChIJX7X7cF3Xy4cRMVwKipz7dO4');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Lake of the Ozarks State Park Lake Trailhead', 'Brumley, MO 65017', 2.7, 'Moderate', 'https://www.google.com/maps/place/?q=place_id:ChIJJZYrbQvRxIcROR9qIbX2YuY');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Ha Ha Tonka Spring Trail', 'D-144, Camdenton, MO 65020', 1.4, 'Moderate', 'https://www.google.com/maps/place/?q=place_id:ChIJ6eezwMTfxIcRJOGWTUg1xmQ');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Greater Ozarks Audubon Trail', 'Lake Springfield Park Rd, Springfield, MO 65804', 2.1, 'Easy', 'https://www.google.com/maps/place/?q=place_id:ChIJE087xnh7z4cRtvjfKhNtFOc');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Ozarks Highlands Trail', 'Mountainburg, AR 72946', 156.7, 'Hard', 'https://www.google.com/maps/place/?q=place_id:ChIJXx-Zc2vdy4cRc_F0DcXbK3M');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Bluff Spring Trailhead', '1550 W Jackson St, Ozark, MO 65721', 6.7, 'Moderate', 'https://www.google.com/maps/place/?q=place_id:ChIJNxY79Vtxz4cRmDQh0TtTsXg');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Chadwick Flyer Trail Bicycling and Walking Trail', 'Ozark, MO 65721', 1.6, 'Easy', 'https://www.google.com/maps/place/?q=place_id:ChIJy-g7Hk9xz4cRQ2p3ry5SiY4');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Ozark Trail Onondaga Terminus', 'Leasburg, MO 65535', 12.2, 'Hard', 'https://www.google.com/maps/place/?q=place_id:ChIJ0wzCoTnX24cRMjSxDhtA2dQ');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Big Spring - Ozark National Scenic Riverways', 'Van Buren, MO 63965', 0.6, 'Easy', 'https://www.google.com/maps/place/?q=place_id:ChIJpThUVVhH14cRylG0lrguTl0');
+INSERT INTO trails (trail_name, location, length, difficulty) VALUES('Rocky Falls Shut-ins', 'Winona, MO 65588', 0.1, 'Easy', 'https://www.google.com/maps/place/?q=place_id:ChIJy1DHlDVN14cRuCTMoDbuo_o');
+
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Ozark National Forest', 'Russellville, AR 72801', 'Drive-In', 'Barbecue grill, Picnic tables, Public restroom', 'Area with 1.2 million acres in the Ozark mountains with multi-use trails & places to camp & fish.', 'https://www.google.com/maps/place/?q=place_id:ChIJF5XJGp5TzIcRhZm_sy8waqk');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Lake of the Ozarks State Park', '403 MO-134, Brumley, MO 65017', 'Drive-In', 'Barbecue grill, Picnic tables, Public restroom, Slides, Swings', 'Swimming, hiking/biking trails, camping, boating with an aquatic trail map & lantern-lit cave tours.', 'https://www.google.com/maps/place/?q=place_id:ChIJm3rPiz_QxIcR-Wdktj4fQc4');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Busiek State Forest and Wildlife Area', 'Highlandville, MO 65669', 'Drive-In', NULL, '2,700-acre park with trails for hikers, bikes & horses, plus permitted camping & a shooting range.', 'https://www.google.com/maps/place/?q=place_id:ChIJo6moLKENz4cRP33JeuTUxXQ');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Ha Ha Tonka State Park', '1491 Missouri D, Camdenton, MO 65020', 'Drive-In', 'Barbecue grill, Picnic tables, Public restroom', 'Scenic park featuring the ruins of a 20th-century castle, plus trails, caves & more amid lake views.', 'https://www.google.com/maps/place/?q=place_id:ChIJzetMEMLfxIcR6BMiJNIW3co');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Ozark Parks & Recreation', '1530 W Jackson St, Ozark, MO 65721', 'Drive-In', 'Picnic tables, Public restroom, Volleyball court', NULL, 'https://www.google.com/maps/place/?q=place_id:ChIJ0Yb3jxFxz4cRIvSGxS6nGwY');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Finley River Park', '891-961 N Riverside Rd, Ozark, MO 65721', 'Drive-In', 'Barbecue grill, Baseball field, Picnic tables, Public restroom, Slides, Swings', 'Public recreation park with pavilions for events, sports facilities & extensive lawns.', 'https://www.google.com/maps/place/?q=place_id:ChIJ6VjDDBpxz4cRQgZ5RPs_A9I');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Dogwood Canyon Nature Park', '2038 State Hwy 86, Lampe, MO 65681', 'Drive-In', 'Picnic tables, Public restroom', 'Nature preserve open for hiking, biking, fishing & tram tours, with a cafe & cabins for rent.', 'https://www.google.com/maps/place/?q=place_id:ChIJf62T2v_ezocRg0hYXvYCMYU');
+INSERT INTO campgrounds (campground_name, location, access_type, amentities, description, url) VALUES('Reed Mountain Park', 'Ozark, AR 72949', 'Drive-In', 'Barbecue grill, Picnic tables, Public restroom, Slides, Swings', NULL, 'https://www.google.com/maps/place/?q=place_id:ChIJBW9pDXKLy4cRPrQF_o9cqlw');
