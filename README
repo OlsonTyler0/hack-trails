@@ -32,3 +32,29 @@ mysql_username=your_username
 mysql_password=your_password
 mysql_database=trails
 mysql_host=localhost
+```
+
+##  Project Structure
+- playbooks/ - Contains main playbook configurations
+- roles/ - Ansible roles including:
+    - apache - Apache web server configuration
+    - certbot - SSL certificate management
+    - geerlingguy.mysql - MySQL database setup
+
+## Features
+- Automated deployment of Java web application
+- SSL certificate installation and configuration
+- Apache and Tomcat integration
+- MySQL database setup
+- Java servlet compilation and deployment
+
+## Deployment
+- To deploy the application:
+
+`ansible-playbook -i inventory.ini playbooks/apache.yml`
+
+## Components
+- Frontend static files served from /var/www/html/
+- Java servlets deployed to Tomcat at /var/lib/tomcat10/webapps/
+- SSL certificates managed by Certbot
+- Database management through geerlingguy.mysql role
